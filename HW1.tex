@@ -192,7 +192,7 @@ $= 1-P_r[\ExpPRF{}{B} = 0 \;|\; b=0]$
 
 $= 1-P_r[\rho(X') = Y'] $
 
-$= 1-\left[\frac{1}{{{(2^\tau)}^2}^n} \right]$
+$= 1-\left[\frac{1}{{{(2^\tau)}^2}^m} \right]$
 
 
 $\left(b=0 : \; |\Func(m,n)| = \frac{1}{{{(2^\tau)}^2}^m}$ because $|\Func(D,R)| = \frac{1}{{{(2^R)}^2}^D}}, $ F \colon \calK \times
@@ -215,13 +215,13 @@ $\left( \AdvPRF{F}{B} = 2\cdot P_r\left(\ExpPRF{F}{B} = 1\right) - 1 \right)$
 \vspace{0.5cm}
 
 $\AdvPRF{F}{B} $\\
-$=2\left[\frac{1}{2}(P_r(\ExpGuess{F,\tau}{A} =1) + \left[1 -
-\frac{1}{{{(2^\tau)}^2}^n}\right]  \right]- 1
+$=2\left[\frac{1}{2}\left((P_r(\ExpGuess{F,\tau}{A} =1) + \left[1 -
+\frac{1}{{{(2^\tau)}^2}^m}\right]\right)  \right]- 1
 = 
 \left P_r[\ExpGuess{F,\tau}{A}=1] - \frac{1}{{{(2^\tau)}^2}^m}}
 $
 
-Hence, $\AdvGuess{F,\tau}{A} \leq \AdvPRF{F}{B}+\left[\frac{1}{{{(2^\tau)}^2}^n}\right]
+Hence, $\AdvGuess{F,\tau}{A} \leq \AdvPRF{F}{B}+\left[\frac{1}{{{(2^\tau)}^2}^m}\right]
 $
 
 Since $c_2$ is \say{very small} we conclude that F is a secure $PRF$ and it follows that \say{Guess the LSBs} is secure, or difficult to guess LSBs.
