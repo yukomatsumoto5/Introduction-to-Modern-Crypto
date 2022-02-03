@@ -1,0 +1,355 @@
+%Source for HW1
+\documentclass[11pt]{article}
+\include{macros}
+\usepackage{algorithm}
+\usepackage{caption}
+\usepackage{comment}
+\usepackage{dirtytalk}
+\usepackage{algpseudocode}
+\usepackage{url}
+\usepackage{todonotes}
+\newcommand{\bitsoracle}{{\mathsf{Bits}}}
+\newcommand{\indcpa}{{\mathrm{IND}\mbox{-}\mathrm{CPA}}}
+\newcommand{\indrcpa}{{\mathrm{IND}\$\mbox{-}\mathrm{CPA}}}
+\newcommand{\Func}{\mathsf{Func}}
+%\newcommand{\Perm}{\mathsf{Perm}}
+\newcommand{\Prob}[1]{\Pr\left[#1\right]}
+\newcommand{\calX}{\mathcal{X}}
+\newcommand{\thatis}{i.e. }
+\newcommand{\forexample}{e.g. }
+\def\NoNumber#1{{\def\alglinenumber##1{}\State #1}\addtocounter{ALG@line}{-1}}
+
+\DeclareCaptionFormat{myformat}{#3}
+\captionsetup[algorithm]{format=myformat}
+ 
+%\newcommand{\Adv}{\mathrm{Adv}}
+\newcommand{\ExpPRF}[2]{\mathsf{Exp}^{\mathrm{prf}}_{#1}{(#2)}}
+\newcommand{\AdvPRF}[2]{\Adv^{\mathrm{prf}}_{#1}(#2)}
+\newcommand{\ExpVP}[2]{\mathsf{Exp}^{\mathrm{vp}}_{#1}{(#2)}}
+\newcommand{\AdvVP}[2]{\Adv^{\mathrm{vp}}_{#1}(#2)}
+\newcommand{\ExpPRP}[2]{\mathsf{Exp}^{\mathrm{prp}}_{#1}{(#2)}}
+\newcommand{\AdvPRP}[2]{\Adv^{\mathrm{prp}}_{#1}(#2)}
+\newcommand{\ExpGuess}[2]{\mathsf{Exp}^{\mathrm{guess}}_{#1}{(#2)}}
+\newcommand{\AdvGuess}[2]{\Adv^{\mathrm{guess}}_{#1}(#2)}
+
+\newcommand{\calV}{\mathcal{V}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{{\bf  Introduction to Modern Cryptography}\\ Problem Set 1 \\[2ex] }
+\date{}
+\author{}
+\begin{document}
+\maketitle
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\thispagestyle{empty}
+
+\paragraph{Due date.} Jan 31, 2022 (by 11:59pm).  Please turn in a PDF
+document, and please try to typeset it in LaTeX.  (I'll provide the
+source for this assignment, so you have a starting point.)
+Since you can work in groups, please put all names on your solution
+set, and please include the last name of at least one of your group members in the filename.
+
+\paragraph{Notational reminders.}  Recall that when $X,Y$ are
+bitstrings, $X \concat Y$ is the concatenation of the two.   When
+$|X|=|Y|$, we write $X \xor Y$ for their bitwise exclusive-or.
+
+\paragraph{Problem 1.}
+ 
+\begin{figure*}[ht]
+\center
+\fpage{.7}{
+\hpagess{.6}{.45}
+{
+\experimentv{$\ExpGuess{F,\tau}{A}$:}\\
+$\calX \gets \emptyset$\\
+$K \getsr \calK$\\
+$(P,X')\getsr A^{\calO(\cdot)}$\\
+if $\mathsf{LSB}_\tau(F_K(X'))=P$ and $X' \notin \calX$ then Ret 1 \\
+Ret 0
+}
+{
+\oraclev{$\calO(X)$}\\
+$\calX \gets \calX \cup \{X\}$\\
+Ret $F_K(X)$
+}
+}
+%
+\fpage{.7}{
+\hpagess{.6}{.45}
+{
+\experimentv{$\ExpPRF{F}{A}$:}\\
+$b \getsr \bits$\\
+$K \getsr \calK$\\
+$\rho \getsr \Func(\calD,\calR)$\\
+$b'\getsr A^{\calO(\cdot)}$\\
+Ret $[b'=b]$
+}
+{
+\oraclev{$\calO(X)$}\\
+if $b=1$ then $Y \gets F_K(X)$\\
+else $Y \gets \rho(X)$\\
+Ret $Y$
+}
+}
+\caption{({\bf Top.}) The ``guess the LSBs'' game for a function family
+  $F\colon \calK \times \calD \to \calR$ where $\calR \subseteq
+  \bits^*$.  On input a
+  bitstring~$X=x_1x_2\cdots x_t$ the
+  function $\mathsf{LSB_\tau}(X)=x_1 x_2 \cdots 
+  x_{\min\{t,\tau\}}$.  ({\bf Bottom.})  The psuedorandom function security notion.}
+\label{fig:guess}
+\end{figure*}
+
+Fix non-empty sets $\calK,\calD,\calR$ where $\calR \subseteq
+\bits^*$, and let $F \colon \calK \times
+\calD \to \calR$ be a function family (as usual, indexed by
+$K\in\calK$).  In Figure~\ref{fig:guess} we define a new (toy) security
+notion called the ``guess-the-LSBs'' notion.  In it, the adversary is
+given access to an oracle for $F_K(\cdot)$ for a uniform, secret
+key~$K$.  At the end of its execution, the adversary must output a
+pair $(P,X')$ and wins the game if the $\tau$ least-significant bits
+of $F_K(X')$ are~$P$.
+Note that the
+adversary does not get credit for outputting a pair $(P,X')$ such
+that $X'$ was previously asked to its oracle; that would be cheating!
+You can assume without loss that there are no pointless queries ---~in this case, no repeated
+queries (because $F_K$ is deterministic) and no queries $X \notin
+\calD$~--- and that $X' \in \calD$.
+
+The $\tau$-LSB-guessing advantage of an adversary~$A$, against
+function family~$F$, is
+$\AdvGuess{F,\tau}{A}=\Prob{\ExpGuess{F,\tau}{A}=1}$.  
+In the experiment we track the following adversarial resources: time
+complexity~$t$, number of queries asked~$q$, and~$\mu$ the total
+bitlength of all queries plus the length of the adversary's output.
+
+({\bf Part a.}) Please fill in the following theorem, and provide a nice proof of it.
+
+\begin{theorem}
+Fix integers $N,\tau$ such that $0 < \tau \leq N$.
+Fix non-empty sets $\calK,\calD$ and let $F \colon \calK \times
+\calD \to \bits^N$ be a function family.  Let~$A$ be an adversary
+using resources~$t,q,\mu$.  Then there exists a PRF-adversary~$B$
+(explicitly constructed in the proof of this theorem) such that
+\[
+\AdvGuess{F,\tau}{A} \leq 1 \AdvPRF{F}{B} + \frac{1}{{{(2^\tau)}^2}^n} \mbox{   [fill in
+  appropriate (small) constants $c_1,c_2$] }
+\]
+where $B$ has time complexity~$t'+q$,
+asks $q'=q$ queries, these of total length
+$\mu'=\mu$%[\mbox{FILL IN}]$.
+\end{theorem}
+
+\textbf{Part a.}
+
+We will use $P_r[\ExpPRF{}{B} = 1]$ and condition this probability by the challenge bit $b$ for \ExpPRF{}{B}^{\calO(\cdot)}$.We need to construct adversary $B$ to simulate adversary~$A$.
+
+\begin{comment}
+\adversaryv{$B^{\calO}$}\\
+(Y', X')$\leftarrow$ {$A^{\calO(\cdot)}$}\\
+If $\calO (X')=Y'$ then Return 1\\
+Return 0
+\end{comment}
+
+\begin{algorithm}
+\renewcommand{\thealgorithm}{}
+\caption{\textbf{adversary $B^{\calO}$}}
+\label{alg:cap}
+\begin{algorithmic}
+
+\State $(Y', X') \gets A^{\calO(\cdot)}$
+\If{$\calO (X')=Y'$}
+\State \Return 1
+\EndIf
+\State \Return 0
+\end{algorithmic}
+\end{algorithm}
+
+When challenge bit $b=1$, adversary $A$ expects $F_K$ for a random key, which perfectly simulates $A$'s queries in $F_k$ or when challenge bit $b=0$, adversary $A$ expects random function $\rho$. Thus, $P_r[\ExpPRF{}{B} = 1 \;|\; b=0] = P_r[\ExpGuess{}{A} = 1 \;|\; b=0]$.
+
+
+By construction, B has time complexity of $t'+q$, asks $q'=q$ queries, those total length $\mu'=\mu$. 
+
+\vspace{0.5cm}
+
+\underline{$b=1 \; so \; \calO = F_K$}
+
+$P_r\left[\ExpPRF{}{B} = 1 \;|\; b=1\right] $
+
+$=P_r\left[F_K(X') = Y' \right]  $
+
+$=P_r[\ExpGuess{}{A} = 1 \;|\; b=1]$
+
+($it \;is\; function\; family \;whose\; security \;is \;being \;examined$)
+
+\vspace{0.5cm}
+
+\underline{$b=1 \; so \; \calO = \rho$}
+
+$P_r[\ExpPRF{}{B} = 1 \;|\; b=0] $
+
+$= 1-P_r[\ExpPRF{}{B} = 0 \;|\; b=0]$
+
+$= 1-P_r[\rho(X') = Y'] $
+
+$= 1-\left[\frac{1}{{{(2^\tau)}^2}^n} \right]$
+
+
+$\left(b=0 : \; |\Func(m,n)| = \frac{1}{{{(2^\tau)}^2}^m}$ because $|\Func(D,R)| = \frac{1}{{{(2^R)}^2}^D}}, $ F \colon \calK \times
+\calD \to \bits^N$\right$
+
+\vspace{0.5cm}
+
+Hence, \\$P_r[\ExpPRF{}{B} = 1] = P_r[\ExpPRF{}{B} = 1 \;|\; b=1] 
++ P_r[\ExpPRF{}{B} = 1 \;|\; b=0]
+$
+
+$\AdvPRF{F}{B} = $\\
+$=2\left[\frac{1}{2}(P_r(\ExpGuess{F}{A} =1)+
+P_r(\ExpPRF{}{B} =1 \; | \; b=0)
+)\right] -1$
+
+
+$\left( \AdvPRF{F}{B} = 2\cdot P_r\left(\ExpPRF{F}{B} = 1\right) - 1 \right)$
+
+\vspace{0.5cm}
+
+$\AdvPRF{F}{B} $\\
+$=2\left[\frac{1}{2}(P_r(\ExpGuess{F,\tau}{A} =1) + \left[1 -
+\frac{1}{{{(2^\tau)}^2}^n}\right]  \right]- 1
+= 
+\left P_r[\ExpGuess{F,\tau}{A}=1] - \frac{1}{{{(2^\tau)}^2}^m}}
+$
+
+Hence, $\AdvGuess{F,\tau}{A} \leq \AdvPRF{F}{B}+\left[\frac{1}{{{(2^\tau)}^2}^n}\right]
+$
+
+Since $c_2$ is \say{very small} we conclude that F is a secure $PRF$ and it follows that \say{Guess the LSBs} is secure, or difficult to guess LSBs.
+
+\vspace{0.5cm}
+
+
+
+({\bf Part b.})  The security bound that you proved in Part a should be a
+function of the parameter~$\tau$.  Consider the full range of values
+for $\tau$: When is the theorem most ``useful''.  What is the
+relationship between the additive term~$c_2$ that you find, and the
+``trivial'' winning probability?
+
+
+\textbf{Part b.}
+
+$\left|\AdvGuess{F,\tau}{A}-\AdvPRF{F}{B}\right| \leq \frac{1}{{{(2^\tau)}^2}^n}$
+
+We can expect the behaviour of the oracle. When $\AdvGuess{F, \tau}{A}$ is close to 0, then the oracle behaves random function. 
+
+Also, $P$ is a function of parameter $\tau$ and the additive term $c_2$ gets \say{tiny} when $\tau$ is a large number as its range is $2^\tau$ for all $0\leq \tau \leq N$ so the winning probability gets \say{tiny}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\paragraph{Problem 2.}
+Fix $k,n>0$ and let $E \colon \bits^k \times \bits^n \to \bits^n$ be a
+blockcipher.  We would like to construct, from~$E$ an new blockcipher
+that is ``wider''; in particular $F \colon \bits^k \times \bits^{2n}
+\to \bits^{2n}$.  (Why build from~$E$, instead of building~$F$ from
+scratch?  Maybe~$E$ is AES, or some other standardized blockcipher,
+that has undergone years of cryptanalysis.  Better to build from that,
+than to try to design your own $2n$-bit blockcipher.)  Here's the
+candidate construction:  for every $K \in \bits^k, X \in \bits^{2n}$
+let $F_K(X) = E_K(X_L) || E_K(X_R)$, where $X = X_L \concat X_R$.
+(You can infer from the description of~$E$ that $|X_L|=|X_R|=n$.)
+
+\begin{itemize}
+\item Verify that~$F$ is, indeed, a blockcipher.
+\end{itemize}
+
+\paragraph{Proof F is a Blockcipher}
+We know by construction that $E \colon \bits^k \times \bits^n \to \bits^n$ is indeed a blockcipher. Therefore to prove that $F \colon \bits^k \times \bits^{2n}
+\to \bits^{2n}$ is also a Blockcipher, we will analyze the implementation of $F$. By hypothesis,  $X = X_L \concat X_R$. Begin by letting $X_L = L$ with $L \getsr \bits^n$ and $X_R \in \bits^n$. Since $E$ is a Blockcipher, we know that $E_k(X_R)$ will be a Bijection and so we will have a unique set of solutions to $F_k(X) = E_k({L}) || E_k(X_R)$ for all $X_R \in \bits^{n}$. Recall that $E_k({L})$ is constant for some $L$. Now, consider the case of $X_L = M$ with $M \getsr \bits^n - {L}$. We know again that $E_k(M) \neq E_k(L)$ using the fact that $E_k$ is Bijective. Hence for all $X_R \in \bits^n$ we know that $F_k(X) = E_k(M) || E_k(X_R)$ is also a unique set of solutions in terms of $X_L$ and $X_R$. Therefore, $F$ is  a Blockcipher.
+
+\begin{itemize}
+\item Show that~$F$ \emph{is not} a secure PRP, even if~$E$
+  \emph{is}.  Specifically, give an attack ---~described as an
+  adversary~$A$ and using the style and notation that we've seen in
+  the videos~--- that uses just a few oracle queries, and not much
+  running time, yet gains PRP-advantage against~$F$ that is close to
+  1.  Please give a step-by-step analysis of the advantage, i.e.,
+  carefully reason out an expression for~$\AdvPRP{F}{A}$, where~$A$ is
+  \emph{your} adversary/attack. 
+\end{itemize}
+
+\paragraph{Proof F is NOT Secure PRP}\quad
+\\
+
+
+\adversaryv{$A^{\calO(.)}_F$}\\
+Query $\calO(0^n || 0^n)$\\
+Call the Result $Y_L || Y_R$\\
+If $Y_L == Y_R$ then Return 1\\
+Return 0\\
+
+$\AdvPRP{F}{A} = 2*[Pr(\ExpPRP{F}{A} = 1 | b = 1)Pr(b = 1) +  Pr(\ExpPRP{F}{A} = 1 | b = 0)Pr(b = 0)] - 1$\\
+
+Because $Pr(b = 1) = \frac{1}{2}$ and $Pr(b = 0) = 1 - \frac{1}{2} = \frac{1}{2}$ \\
+\\
+We can simplify \\
+\\
+$\AdvPRP{F}{A} = 2*[\frac{1}{2}Pr(\ExpPRP{F}{A} = 1 | b = 1) +  \frac{1}{2}Pr(\ExpPRP{F}{A} = 1 | b = 0)] - 1$\\
+\\
+Additionally, note that $Pr(\ExpPRP{F}{A} = 1 | b = 0) = 1 - Pr(\ExpPRP{F}{A} = 0 | b = 0)$\\
+
+
+Then $\AdvPRP{F}{A} = 2*[\frac{1}{2}Pr(\ExpPRP{F}{A} = 1 | b = 1) +  \frac{1}{2}(1 - Pr(\ExpPRP{F}{A} = 0 | b = 0))] - 1$\\
+
+Which simplifies to $\AdvPRP{F}{A} = Pr(\ExpPRP{F}{A} = 1 | b = 1) +  1 - Pr(\ExpPRP{F}{A} = 0 | b = 0) - 1$ = \\
+
+$\AdvPRP{F}{A} = Pr(\ExpPRP{F}{A} = 1 | b = 1) - Pr(\ExpPRP{F}{A} = 0 | b = 0)$\\
+
+By analyzing $Pr(\ExpPRP{F}{A} = 1 | b = 1)$ we can see that we will be testing our experiment against $F_K$ and we know that for $F_K(0^n|| 0^n)$ our adversary will output the correct result 1 by construction.\\ 
+\\
+Hence $Pr(\ExpPRP{F}{A} = 1 | b = 1) = 1$\\
+
+Leaving us with $\AdvPRP{F}{A} = 1 - Pr(\ExpPRP{F}{A} = 0 | b = 0)$\\
+
+Now, consider the term $Pr(\ExpPRP{F}{A} = 0 | b = 0)$\\
+\\
+We know that our Attacker will be querying against a random permutation since $b = 0$
+\\
+
+So, we need to consider the possibility that our experiment outputs a zero, which only happens if our Attack returns 1 - meaning our guess is incorrect. \\
+\\
+Because out attack calls $\calO(0^n || 0^n)$ to a random permutation, we need to analyze the probability that some output is symmetric.\\
+\\
+Since we have an output of the form $\bits^{2n}$ we know that given any left-hand side $\bits^{n}$ the probability that the other side will be the exact same for a permutation is $\frac{1}{2^n}$\\
+\\
+Hence, $Pr(\ExpPRP{F}{A} = 0 | b = 0) = \frac{1}{2^n}$\\
+\\
+$\AdvPRP{F}{A} = 1 - \frac{1}{2^n} \approx 1$ and we can see that $F$ is not secure PRP.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\paragraph{Problem 3.}
+Let $E:\bits^k \times \bits^n \to \bits^n$ be a blockcipher.  From it,
+construct $E^{(2)}\colon \bits^{2k} \times \bits^n \to \bits^n$ by
+$E^{(2)}_{K1,K2}(X) = E_{K2}(E_{K1}(X))$. Prove that if $E$~is a
+secure PRP, then so is~$E^{(2)}$.  
+
+To get you started, here's a reminder of how to approach this
+proof. Given an adversary~$A$ that attacks the PRP-security of
+$E^{(2)}$, build an adversary~$B$ that attacks the PRP-security
+of~$E$.  Carefully show that the PRP-advantage of~$B$ upperbounds the
+PRP-advantage of~$A$, by analyzing the probability that~$B$ ``wins''
+its experiment.  When building your adversary~$B$, try to make it as
+simple as possible, and as parsimonious as possible with respect to
+its resources.  
+
+Finally, write a nice theorem statement to encapsulate
+your result. 
+
+\vspace{1cm}
+
+
+\end{document}
+
